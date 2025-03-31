@@ -50,6 +50,8 @@ Note: Due to
 [Issue #37969](https://github.com/Azure/azure-sdk-for-java/issues/37969),
 local development for App Configuration requires using either key-based authentication
 or then implement Client Builder Customization as described in the GitHub issue.
+See also more information here:
+[Using Client Customizers](https://learn.microsoft.com/en-us/azure/azure-app-configuration/howto-convert-to-the-new-spring-boot?tabs=spring-boot-3#using-client-customizers)
 
 Open browser to the following address:
 
