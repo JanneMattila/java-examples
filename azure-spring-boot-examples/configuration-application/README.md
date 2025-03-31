@@ -24,11 +24,11 @@ configuration values and shows them in the user interface.
 
 Here is the app configuration setup:
 
-![App Configuration setup](./images/app-configuration-explorer.png)
+![App Configuration setup](../configuration-application/images/app-configuration-explorer.png)
 
 Here is the key vault setup:
 
-![Key vault setup](./images/key-vault-secrets.png)
+![Key vault setup](../configuration-application/images/key-vault-secrets.png)
 
 Run the demo application:
 
@@ -57,7 +57,7 @@ http://localhost:8080/
 
 You should now see the above values in your app:
 
-![Key vault setup](./images/app-web-page.png)
+![Key vault setup](../configuration-application/images/app-web-page.png)
 
 Health endpoint displays the following output from `http://localhost:8080/actuator/health`:
 
