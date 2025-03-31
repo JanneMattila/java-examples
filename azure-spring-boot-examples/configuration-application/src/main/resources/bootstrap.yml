@@ -6,6 +6,8 @@ spring:
     bootstrap:
       enabled: true
 
+    # All configuration properties for Azure Spring Cloud:
+    # https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configuration-properties-all
     azure:
       # Enable Azure App Configuration in the bootstrap phase
       # https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configuration-properties-azure-app-configuration
@@ -40,11 +42,6 @@ spring:
           property-sources:
             - name: key-vault-property-source-1
               endpoint: ${KEY_VAULT_ENDPOINT}
-
-      # Enable the DefaultAzureCredential chain
-      credential:
-        managed-identity:
-          enabled: true
 
 # Mapping of the configuration properties
 config:

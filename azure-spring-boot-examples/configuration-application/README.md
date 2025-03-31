@@ -6,6 +6,8 @@
 
 [What is Spring Cloud Azure? - spring.io](https://spring.io/projects/spring-cloud-azure)
 
+[Spring Cloud Azure configuration properties](https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configuration-properties-all)
+
 [Spring Cloud Azure Samples](https://github.com/Azure-Samples/azure-spring-boot-samples)
 
 [Spring Cloud Azure > App configuration support](https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/app-configuration-support?tabs=azure-ad)
