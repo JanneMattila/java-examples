@@ -118,5 +118,5 @@ Health endpoint displays the following output from `http://localhost:8080/actuat
 ```
 
 The key configuration points can be found from 
-[bootstrap.yml](./azure-spring-boot-examples/configuration-application/src/main/resources/bootstrap.yml)
+[bootstrap.yml](./src/main/resources/bootstrap.yml)
 
