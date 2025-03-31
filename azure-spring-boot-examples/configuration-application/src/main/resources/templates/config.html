@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring Cloud Azure Configuration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1, h2 {
+            color: #333366;
+        }
+        .source-section {
+            margin-bottom: 30px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .navbar {
+            background-color: #f2f2f2;
+            overflow: hidden;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .navbar a {
+            float: left;
+            display: block;
+            color: #333366;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+        .navbar a:hover {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="/">Configuration Overview</a>
+        <a href="/api/diagnostics/app-config">App Config Diagnostics</a>
+        <a href="/api/diagnostics/key-vault">Key Vault Diagnostics</a>
+        <a href="/actuator/health">Health Status</a>
+    </div>
+    
+    <h1>Spring Cloud Azure Configuration</h1>
+    <p>This page displays all configuration values from various sources including Azure App Configuration and Key Vault.</p>
+    
+    <div th:each="sourceEntry : ${configBySource}" class="source-section">
+        <h2 th:text="${sourceEntry.key}">Configuration Source</h2>
+        <table>
+            <tr>
+                <th>Key</th>
+                <th>Value</th>
+            </tr>
+            <tr th:each="configEntry : ${sourceEntry.value}">
+                <td th:text="${configEntry.key}">Property Key</td>
+                <td th:text="${configEntry.value}">Property Value</td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- If no configuration values are found -->
+    <div th:if="${configBySource == null || configBySource.isEmpty()}">
+        <p>No configuration values found.</p>
+    </div>
+</body>
+</html>

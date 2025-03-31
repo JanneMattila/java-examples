@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: springcloudazure
+      
+  cloud:
+    bootstrap:
+      enabled: true
+
+    azure:
+      # Enable Azure App Configuration in the bootstrap phase
+      # https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configuration-properties-azure-app-configuration
+      appconfiguration:
+        enabled: true
+        stores:
+          - fail-fast: false
+            # 1) Use this with managed identity
+            # endpoint: ${APP_CONFIGURATION_ENDPOINT}
+            # 2) Use this with connection string including secret
+            connection-string: ${APP_CONFIGURATION_CONNECTION_STRING}
+            selects:
+              # More examples here for filters:
+              # https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/app-configuration-support?tabs=azure-ad
+              - key-filter: "/application/"
+                label-filter: ""
+            # To enable the refresh feature, you need to add the following properties
+            # monitoring:
+            #   enabled: true
+            #   refresh-interval: 5s
+            #   triggers:
+            #     - key: "updatekey"
+            #       label: ""
+            #       delay: 5s
+      
+      # Enable Key Vault in bootstrap phase for secret loading
+      # https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configuration-properties-azure-key-vault-secrets
+      keyvault:
+        secret:
+          enabled: true
+          property-source-enabled: true
+          property-sources:
+            - name: key-vault-property-source-1
+              endpoint: ${KEY_VAULT_ENDPOINT}
+
+      # Enable the DefaultAzureCredential chain
+      credential:
+        managed-identity:
+          enabled: true
+
+# Mapping of the configuration properties
+config:
+  message: ${message:Demo value from application settings}
+  secretSetting: ${secret1:Demo secret value from application settings}
+  anotherSecretSetting: ${secret2:Demo secret value from application settings}
+  database: ${connection-string:Demo database connection string from application settings}
