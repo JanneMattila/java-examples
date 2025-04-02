@@ -16,9 +16,9 @@ spring:
         stores:
           - fail-fast: false
             # 1) Use this with managed identity
-            # endpoint: ${APP_CONFIGURATION_ENDPOINT}
+            endpoint: ${APP_CONFIGURATION_ENDPOINT}
             # 2) Use this with connection string including secret
-            connection-string: ${APP_CONFIGURATION_CONNECTION_STRING}
+            # connection-string: ${APP_CONFIGURATION_CONNECTION_STRING}
             selects:
               # More examples here for filters:
               # https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/app-configuration-support?tabs=azure-ad

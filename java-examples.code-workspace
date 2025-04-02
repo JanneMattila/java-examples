@@ -4,7 +4,10 @@
 			"path": "."
 		}
 	],
-	"settings": {},
+	"settings": {
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.configuration.updateBuildConfiguration": "automatic"
+	},
 	"extensions": {
 		"recommendations": [
 			"vscjava.vscode-java-pack"

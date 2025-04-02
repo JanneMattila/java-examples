@@ -41,6 +41,13 @@
             <version>${spring-cloud-azure.version}</version>
         </dependency>
 
+        <dependency>
+            <!-- https://mvnrepository.com/artifact/com.azure.spring/spring-cloud-azure-appconfiguration-config-web -->
+            <groupId>com.azure.spring</groupId>
+            <artifactId>spring-cloud-azure-appconfiguration-config-web</artifactId>
+            <version>${spring-cloud-azure.version}</version>
+        </dependency>
+
         <!-- Spring Cloud Azure Key Vault -->
         <dependency>
             <!-- https://mvnrepository.com/artifact/com.azure.spring/spring-cloud-azure-starter-keyvault-secrets -->

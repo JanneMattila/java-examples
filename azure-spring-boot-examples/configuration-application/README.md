@@ -4,6 +4,10 @@
 
 [What is Spring Cloud Azure - learn.microsoft.com](https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/spring-cloud-azure-overview)
 
+[Quickstart: Create a Java Spring app with Azure App Configuration](https://learn.microsoft.com/en-us/azure/azure-app-configuration/quickstart-java-spring-app?toc=%2Fazure%2Fdeveloper%2Fjava%2Fspring-framework%2Ftoc.json&bc=%2Fazure%2Fdeveloper%2Fjava%2Fbreadcrumb%2Ftoc.json)
+
+[Load a secret from Azure Key Vault in a Spring Boot application](https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configure-spring-boot-starter-java-app-with-azure-key-vault)
+
 [What is Spring Cloud Azure? - spring.io](https://spring.io/projects/spring-cloud-azure)
 
 [Spring Cloud Azure configuration properties](https://learn.microsoft.com/en-us/azure/developer/java/spring-framework/configuration-properties-all)
@@ -36,11 +40,7 @@ Run the demo application:
 
 ```powershell
 # Set connection parameters:
-# 1) Use this with managed identity
-$env:APP_CONFIGURATION_ENDPOINT="https://<youraccount>.azconfig.io/"
-# 2) Use this with connection string including secret
-$env:APP_CONFIGURATION_CONNECTION_STRING="Endpoint=https://<youraccount>.azconfig.io;Id=<value>;Secret=<secret>"
-
+$env:APP_CONFIGURATION_ENDPOINT="https://<youraccount>.azconfig.io"
 $env:KEY_VAULT_ENDPOINT="https://<youraccount>.vault.azure.net/"
 
 .\run-app.bat
@@ -52,6 +52,13 @@ local development for App Configuration requires using either key-based authenti
 or then implement Client Builder Customization as described in the GitHub issue.
 See also more information here:
 [Using Client Customizers](https://learn.microsoft.com/en-us/azure/azure-app-configuration/howto-convert-to-the-new-spring-boot?tabs=spring-boot-3#using-client-customizers)
+
+Alternatively, you can run following `mvn` commands:
+
+```powershell
+mvn clean package
+mvn spring-boot:run
+```
 
 Open browser to the following address:
 

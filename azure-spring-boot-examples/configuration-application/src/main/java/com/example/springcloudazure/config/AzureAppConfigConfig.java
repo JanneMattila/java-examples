@@ -16,7 +16,7 @@ public class AzureAppConfigConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(AzureAppConfigConfig.class);
 
-    @Value("${spring.cloud.azure.appconfiguration.endpoint:}")
+    @Value("${spring.cloud.azure.appconfiguration.stores[0].endpoint:}")
     private String endpoint;
     
     @Value("${spring.cloud.azure.appconfiguration.stores[0].connection-string:}")

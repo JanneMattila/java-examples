@@ -44,9 +44,11 @@ public class AppConfigPropertyProcessor implements EnvironmentPostProcessor {
                         
                         logger.debug("Adding normalized property: {} -> {} = {}", propertyName, normalizedName, value);
                         
-                        // We can't modify the original property sources directly,
-                        // but environment.getSystemProperties() is a mutable map we can use
-                        System.setProperty(normalizedName, value.toString());
+                        if (value != null) {
+                            System.setProperty(normalizedName, value.toString());
+                        } else {
+                            System.setProperty(normalizedName, "");
+                        }
                     }
                 }
             }
