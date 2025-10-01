@@ -205,6 +205,19 @@ log4j.appender.console.layout=org.apache.log4j.PatternLayout
 log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: %m%n
 ```
 
+## Running in Azure Databricks
+
+Want to run this application in Azure Databricks? Check out the **[DATABRICKS.md](DATABRICKS.md)** guide!
+
+Key differences:
+- ✅ Use existing `SparkSession` instead of creating one
+- ✅ Don't call `sc.stop()` - Databricks manages lifecycle
+- ✅ Use DBFS paths (`dbfs:/`) for file access
+- ✅ Deploy as JAR job or use notebooks
+
+- `WordCountAppDatabricks.java` - Works in both local and Databricks environments
+- `WordCountDatabricks.scala` - Complete Databricks notebook with examples
+
 ## Next Steps
 
 Once you understand this basic example, you can:
@@ -212,9 +225,9 @@ Once you understand this basic example, you can:
 1. Try more complex Spark operations (joins, aggregations)
 2. Use Spark SQL with DataFrames
 3. Process streaming data with Spark Streaming
-4. Scale up to a real Spark cluster when needed
+4. Scale up to Azure Databricks or other Spark clusters
 
-The beauty of local mode is that your code will work the same way on a cluster - you just change the `.setMaster()` configuration!e Spark
+The beauty of local mode is that your code will work the same way on a cluster - you just need to adapt the configuration!e Spark
 
 [Apache Spark](https://spark.apache.org/)
 
