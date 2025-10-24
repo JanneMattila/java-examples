@@ -27,7 +27,7 @@ ECHO Running Word Count via Databricks Connect
 ECHO ==================================================
 ECHO.
 
-SET "MAIN_CLASS=com.example.spark.WordCountAppDatabricks"
+SET "MAIN_CLASS=com.example.databricks.WordCountAppDatabricks"
 SET "ARGS="
 IF NOT "%~1"=="" (
     SET "ARGS=%~1"

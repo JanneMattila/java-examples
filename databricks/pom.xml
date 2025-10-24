@@ -115,7 +115,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.4.1</version>
                 <configuration>
-                    <mainClass>com.example.spark.WordCountAppDatabricks</mainClass>
+                    <mainClass>com.example.databricks.WordCountAppDatabricks</mainClass>
                 </configuration>
             </plugin>
         </plugins>

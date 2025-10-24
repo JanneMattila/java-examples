@@ -1,6 +1,6 @@
 # Databricks Connect Word Count Example
 
-This Java application demonstrates running Apache Spark workloads both **locally via Databricks Connect** and **inside Azure Databricks clusters**. The same code works in both environments, making it perfect for development, testing, and production deployment.
+This Java application demonstrates running Apache Spark workloads both **locally via [Databricks Connect](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/databricks-connect/)** and **inside Azure Databricks clusters**. The same code works in both environments, making it perfect for development, testing, and production deployment.
 
 ## What This Example Does
 
@@ -37,8 +37,8 @@ The application automatically detects which mode it's running in by checking the
 
 - **Java 21** (or compatible JDK version)
 - **Maven 3.6+**
-- **Databricks CLI** (for Connect mode)
 - **Active Azure Databricks workspace**
+- **Databricks CLI** (optional - only for CLI-based authentication)
 
 ## Project Structure
 
@@ -59,7 +59,62 @@ databricks/
 
 ## Authentication and Configuration
 
-### Setting Up Databricks Connect
+The application supports multiple authentication methods, automatically selected in this priority order:
+
+### Method 1: Azure Managed Identity (Recommended for Production)
+
+**No CLI required!** When running on Azure resources (VMs, App Services, Azure Functions, Container Instances), the SDK automatically uses Managed Identity:
+
+```powershell
+# Set workspace and compute
+$env:DATABRICKS_HOST = "https://adb-2785354362445214.14.azuredatabricks.net"
+$env:DATABRICKS_WAREHOUSE_ID = "2a20ab81c2a7bf93"
+
+# Run - Managed Identity is used automatically
+mvn exec:java
+```
+
+**How it works**:
+1. Application detects it's running in Azure (via Azure Instance Metadata Service)
+2. SDK requests an access token from the Azure Managed Identity endpoint
+3. Token is used to authenticate with Databricks workspace
+4. No secrets or credentials stored in code or configuration files
+
+**Setup requirements**:
+- Enable System-assigned or User-assigned Managed Identity on your Azure resource
+- Grant the identity access to your Databricks workspace:
+  - Navigate to Databricks workspace → Settings → Identity and Access
+  - Add the managed identity with appropriate permissions
+
+### Method 2: Service Principal (for CI/CD)
+
+Use Azure Service Principal credentials:
+
+```powershell
+$env:DATABRICKS_HOST = "https://adb-2785354362445214.14.azuredatabricks.net"
+$env:DATABRICKS_WAREHOUSE_ID = "2a20ab81c2a7bf93"
+$env:ARM_CLIENT_ID = "<service-principal-client-id>"
+$env:ARM_CLIENT_SECRET = "<service-principal-secret>"
+$env:ARM_TENANT_ID = "<azure-tenant-id>"
+
+mvn exec:java
+```
+
+### Method 3: Personal Access Token
+
+Use a Databricks personal access token:
+
+```powershell
+$env:DATABRICKS_HOST = "https://adb-2785354362445214.14.azuredatabricks.net"
+$env:DATABRICKS_TOKEN = "<your-personal-access-token>"
+$env:DATABRICKS_WAREHOUSE_ID = "2a20ab81c2a7bf93"
+
+mvn exec:java
+```
+
+### Method 4: Databricks CLI Profile (for Local Development)
+
+Use the Databricks CLI to store credentials:
 
 1. **Install Databricks CLI**:
    ```powershell
@@ -72,25 +127,38 @@ databricks/
    ```
    You'll be prompted for:
    - **Workspace URL**: `https://adb-<workspace-id>.<region>.azuredatabricks.net`
+   - **Personal Access Token**: Generate from User Settings → Access Tokens
 
 3. **Configure environment variables**:
    ```powershell
    $env:DATABRICKS_CONFIG_PROFILE = "databricks-connect"
-   $env:DATABRICKS_CLUSTER_ID = "1234-123456-abcd1234"
-   $env:DATABRICKS_WAREHOUSE_ID = "1234567890abcdef"
+   $env:DATABRICKS_CLUSTER_ID = "1023-084458-l70zdchj"
+   $env:DATABRICKS_WAREHOUSE_ID = "2a20ab81c2a7bf93"
    ```
 
-### How Authentication Works
+### Authentication Priority
 
-When you run the application with Databricks Connect:
+The SDK tries authentication methods in this order:
 
-1. **Profile Resolution**: The SDK reads `DATABRICKS_CONFIG_PROFILE` to locate credentials in `~/.databrickscfg`
-2. **Credential Loading**: Loads workspace URL and token from the profile
-3. **Compute Selection**: Uses `DATABRICKS_CLUSTER_ID` or `DATABRICKS_WAREHOUSE_ID` to determine target compute
-4. **Session Creation**: `DatabricksSession.builder().getOrCreate()` establishes a remote connection
-5. **Command Forwarding**: All DataFrame operations are serialized and sent to the remote compute via gRPC
+1. `DATABRICKS_TOKEN` (explicit token)
+2. **Azure Managed Identity** (automatic in Azure, no configuration needed)
+3. Service Principal (`ARM_CLIENT_ID`, `ARM_CLIENT_SECRET`, `ARM_TENANT_ID`)
+4. Azure CLI credentials (`az login`)
+5. Databricks CLI profile (`DATABRICKS_CONFIG_PROFILE`)
 
-The application never processes data locally—your machine acts as a client sending Spark commands to the remote cluster.
+**The code automatically detects and uses the first available method**, making it seamless to move from local development (CLI) to production (Managed Identity).
+
+### Compute Selection
+
+Choose your execution target:
+
+```powershell
+# Option 1: All-purpose or job cluster
+$env:DATABRICKS_CLUSTER_ID = "1023-084458-l70zdchj"
+
+# Option 2: SQL Warehouse (recommended for DataFrame workloads)
+$env:DATABRICKS_WAREHOUSE_ID = "2a20ab81c2a7bf93"
+```
 
 ## Specifying Input Files
 
