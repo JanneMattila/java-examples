@@ -17,8 +17,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
-        <spark.version>3.5.0</spark.version>
-        <scala.binary.version>2.12</scala.binary.version>
+        <spark.version>3.5.3</spark.version>
+        <scala.binary.version>2.13</scala.binary.version>
     </properties>
 
     <dependencies>
@@ -40,12 +40,24 @@
 
         <!-- Databricks Connect 
         https://mvnrepository.com/artifact/com.databricks/databricks-connect
-        Includes its own Spark Connect client and dependencies
         -->
         <dependency>
             <groupId>com.databricks</groupId>
-            <artifactId>databricks-connect</artifactId>
-            <version>16.4.6</version>
+            <artifactId>databricks-connect_2.13</artifactId>
+            <version>17.2.1</version>
+        </dependency>
+
+        <!-- json4s dependencies - ensure compatible versions -->
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_2.13</artifactId>
+            <version>4.0.7</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-core_2.13</artifactId>
+            <version>4.0.7</version>
         </dependency>
 
         <!-- Jackson - ensure compatible version for Databricks SDK -->

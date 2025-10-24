@@ -41,7 +41,7 @@ public class WordCountAppDatabricks {
             e.printStackTrace();
         } finally {
             if (spark != null && !isDatabricks) {
-                spark.stop();
+                spark.close();
             }
         }
     }
@@ -77,13 +77,11 @@ public class WordCountAppDatabricks {
         Dataset<Row> normalizedWords = lines
                 .select(explode(split(col("value"), "\\s+")).alias("raw_word"))
                 .select(lower(regexp_replace(col("raw_word"), "[^a-z0-9]", "")).alias("word"))
-                .filter(length(col("word")).gt(0))
-                .cache();
+                .filter(length(col("word")).gt(0));
 
         Dataset<Row> wordCounts = normalizedWords
                 .groupBy("word")
-                .count()
-                .cache();
+                .count();
 
         List<Row> topWords = wordCounts
                 .orderBy(desc("count"), col("word"))
@@ -108,8 +106,5 @@ public class WordCountAppDatabricks {
         System.out.println("Total words: " + totalWords);
         System.out.println("Unique words: " + uniqueWords);
         System.out.println("==================================================\n");
-
-        normalizedWords.unpersist();
-        wordCounts.unpersist();
     }
 }
