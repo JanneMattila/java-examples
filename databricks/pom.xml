@@ -126,9 +126,7 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.4.1</version>
-                <configuration>
-                    <mainClass>com.example.databricks.WordCountAppDatabricks</mainClass>
-                </configuration>
+                <!-- No default mainClass - specify via command line with -Dexec.mainClass -->
             </plugin>
         </plugins>
     </build>
