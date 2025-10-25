@@ -1,6 +1,6 @@
 # Databricks Connect Word Count Example
 
-This Java application demonstrates running Apache Spark workloads both **locally via [Databricks Connect](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/databricks-connect/)** and **inside Azure Databricks clusters**. The same code works in both environments, making it perfect for development, testing, and production deployment.
+This Java application demonstrates running Apache Spark workloads via **[Databricks Connect](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/databricks-connect/)**. The application executes locally while leveraging remote Databricks compute resources, making it perfect for development, testing, and production deployment.
 
 ## What This Example Does
 
@@ -16,22 +16,24 @@ The application performs a **word count** analysis on a text file using Apache S
 ## Key Features
 
 - **Modern DataFrame API**: Uses Spark SQL DataFrames instead of legacy RDDs
-- **Environment Detection**: Automatically adapts to Databricks or Connect mode
+- **Databricks Connect**: Executes locally while using remote Databricks compute
 - **Flexible Input**: Accepts file paths via command-line, environment variable, or defaults
-- **Session Management**: Properly handles SparkSession lifecycle in both environments
+- **Session Management**: Properly handles SparkSession lifecycle
 
-## Runtime Modes
+## Databricks Connect
 
-| Aspect | Databricks Connect (Local) | Azure Databricks Cluster |
-|--------|---------------------------|--------------------------|
-| **Execution** | Runs on your local JVM | Runs inside Databricks workspace |
-| **SparkSession** | Created with `DatabricksSession.builder()` | Pre-configured by runtime |
-| **Compute** | Proxies to remote cluster/warehouse | Managed by platform |
-| **File Access** | DBFS/cloud paths resolved remotely | Direct DBFS/storage access |
-| **Authentication** | CLI profile or env variables | Workspace managed |
-| **Session Lifecycle** | You call `.stop()` | Platform manages |
+**Databricks Connect** allows you to run Spark applications from your local development environment while leveraging Databricks compute resources:
 
-The application automatically detects which mode it's running in by checking the `DATABRICKS_RUNTIME_VERSION` environment variable.
+| Aspect | How It Works |
+|--------|--------------|
+| **Execution** | Runs on your local JVM |
+| **SparkSession** | Created with `DatabricksSession.builder()` |
+| **Compute** | Connects to remote Databricks cluster or SQL warehouse |
+| **File Access** | DBFS/cloud paths resolved on Databricks side |
+| **Authentication** | CLI profile, service principal, managed identity, or PAT |
+| **Session Lifecycle** | You manage with `.close()` |
+
+The application automatically detects it's running via Databricks Connect and manages the session appropriately.
 
 ## Prerequisites
 
@@ -176,7 +178,6 @@ The application supports three ways to specify the input file (in priority order
    ```
 
 3. **Default paths**:
-   - Databricks cluster: `dbfs:/FileStore/sample.txt`
    - Databricks Connect: `/Volumes/demo/customer1/sample.txt`
 
 ## Building the Application
@@ -197,8 +198,7 @@ This creates `target/databricks-connect-example-1.0.2.jar` with all dependencies
 
 The script:
 - Sets Java and Maven options for Spark compatibility
-- Applies the `databricks-connect` profile by default
-- Runs via Maven exec plugin
+- Runs via Maven exec plugin with Databricks Connect
 
 ### Option 2: Using Maven Directly
 
@@ -209,45 +209,6 @@ mvn exec:java -Dexec.mainClass=com.example.databricks.WordCountAppDatabricks
 With custom file:
 ```bash
 mvn exec:java -Dexec.mainClass=com.example.databricks.WordCountAppDatabricks -Dexec.args="dbfs:/mydata.txt"
-```
-
-## Running Inside Azure Databricks
-
-### Step 1: Upload the JAR
-
-Using Databricks CLI:
-```bash
-databricks fs cp target/databricks-connect-example-1.0.2.jar dbfs:/FileStore/jars/
-```
-
-Or via Databricks UI: **Workspace → Data → Upload File**
-
-### Step 2: Upload Sample Data (if needed)
-
-```bash
-databricks fs cp data/sample.txt dbfs:/FileStore/sample.txt
-```
-
-### Step 3: Create a Databricks Job
-
-1. Navigate to **Workflows → Create Job**
-2. Configure the task:
-   - **Task name**: WordCount
-   - **Type**: JAR
-   - **Main class**: `com.example.databricks.WordCountAppDatabricks`
-   - **Dependent JAR**: `dbfs:/FileStore/jars/databricks-connect-example-1.0.2.jar`
-   - **Parameters**: `["dbfs:/FileStore/sample.txt"]`
-   - **Cluster**: Select existing or create new
-3. **Run now** and view logs
-
-### Alternative: Run in a Notebook
-
-```scala
-%scala
-import com.example.databricks.WordCountAppDatabricks
-
-// The class will detect it's running in Databricks
-WordCountAppDatabricks.main(Array("dbfs:/FileStore/sample.txt"))
 ```
 
 ## Accessing Cloud Storage
@@ -277,13 +238,10 @@ Configure storage credentials via:
 ### Session Creation
 
 ```java
-final boolean isDatabricks = System.getenv("DATABRICKS_RUNTIME_VERSION") != null;
 SparkSession spark = DatabricksSession.builder().getOrCreate();
 ```
 
-`DatabricksSession.builder()`:
-- In Connect mode: creates a client session proxying to remote compute
-- In Databricks: returns the existing workspace session
+`DatabricksSession.builder()` creates a client session that connects to remote Databricks compute (cluster or SQL warehouse).
 
 ### DataFrame Operations
 
@@ -312,12 +270,12 @@ All operations are:
 ```java
 finally {
     if (spark != null && !isDatabricks) {
-        spark.stop();  // Only stop in Connect mode
+        spark.close();  // Close session when done
     }
 }
 ```
 
-**Critical**: Never call `.stop()` when running inside Databricks—the platform manages the session lifecycle.
+The application checks if it's running in Databricks workspace (where session is managed by the platform) or via Databricks Connect (where you manage the lifecycle).
 
 ## POM Configuration for Databricks Connect
 
@@ -405,12 +363,11 @@ Unique words: 623
 
 ## Best Practices
 
-1. **Use SQL Warehouses for Development**: Faster startup than clusters, auto-scaling, better cost control
-2. **Use Job Clusters for Production**: Optimized for batch workloads, terminate after completion
-3. **Leverage Unity Catalog Volumes**: Better governance and permissions than raw DBFS
-4. **Cache Strategically**: The sample caches intermediate DataFrames—`.unpersist()` when done
-5. **Monitor in Spark UI**: Available in Databricks workspace under cluster details
-6. **Version Control Your JARs**: Tag releases and track which version runs in production
+1. **Use SQL Warehouses for Development**: Faster startup, auto-scaling, better cost control
+2. **Leverage Unity Catalog Volumes**: Better governance and permissions than raw DBFS
+3. **Cache Strategically**: Cache intermediate DataFrames, `.unpersist()` when done
+4. **Monitor in Spark UI**: Available in Databricks workspace under compute details
+5. **Environment Detection**: Use `DATABRICKS_RUNTIME_VERSION` to detect if running in workspace
 
 ## Environment Variables Reference
 
@@ -424,11 +381,11 @@ Unique words: 623
 
 ## Next Steps
 
-- **Scale Up**: Process larger datasets using cluster autoscaling
+- **Scale Up**: Process larger datasets using cluster autoscaling or serverless compute
 - **Add Streaming**: Use Structured Streaming for real-time data
 - **Integrate Delta Lake**: Write results to Delta tables for ACID transactions
-- **Build Pipelines**: Use Databricks Workflows for orchestration
 - **Add Testing**: Unit test DataFrame logic with local Spark sessions
+- **Explore Sales Demo**: Check out `SALES_DEMO_README.md` for advanced DataFrame operations
 
 ## Useful Resources
 
@@ -439,13 +396,13 @@ Unique words: 623
 
 ## Summary
 
-This example demonstrates a production-ready pattern for Spark applications:
+This example demonstrates a production-ready pattern for Spark applications with Databricks Connect:
 
-✅ Single codebase runs locally and in Databricks  
+✅ Runs locally while leveraging remote Databricks compute  
 ✅ Modern DataFrame API with Catalyst optimization  
 ✅ Flexible input configuration (args, env vars, defaults)  
 ✅ Proper session lifecycle management  
-✅ Authentication via Databricks CLI profiles  
+✅ Multiple authentication methods (Managed Identity, Service Principal, PAT, CLI)  
 ✅ Support for clusters and SQL warehouses  
 
-The `WordCountAppDatabricks.java` class handles all environment differences automatically!
+The `WordCountAppDatabricks.java` class handles environment detection and session management automatically!
