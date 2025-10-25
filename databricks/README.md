@@ -665,6 +665,237 @@ Unique words: 623
 
 ---
 
+## Running with Docker
+
+The application can be containerized and run using Docker, which is especially useful for production deployments with Azure Managed Identity.
+
+### Building the Docker Image
+
+```bash
+# Build the image
+docker build -t databricks-connect-app .
+```
+
+### Running the Word Count Demo
+
+```bash
+# Run with environment variables (recommended)
+docker run --rm \
+  -e DATABRICKS_HOST="https://adb-1234567890123456.12.azuredatabricks.net" \
+  -e DATABRICKS_WAREHOUSE_ID="abc123def456" \
+  -e DATABRICKS_TOKEN="<your-token>" \
+  databricks-connect-app
+```
+
+### Running the Sales Analytics Demo
+
+```bash
+# Run Sales Analytics with custom input file
+docker run --rm \
+  -e DATABRICKS_HOST="https://adb-1234567890123456.12.azuredatabricks.net" \
+  -e DATABRICKS_WAREHOUSE_ID="abc123def456" \
+  -e DATABRICKS_TOKEN="<your-token>" \
+  databricks-connect-app \
+  com.example.databricks.SalesAnalyticsDemo "/Volumes/my_catalog/my_schema/my_volume/sales_data.csv"
+```
+
+### Using Azure Managed Identity
+
+When running in Azure Container Instances or Azure Container Apps:
+
+```bash
+# No credentials needed - Managed Identity is used automatically
+docker run --rm \
+  -e DATABRICKS_HOST="https://adb-1234567890123456.12.azuredatabricks.net" \
+  -e DATABRICKS_WAREHOUSE_ID="abc123def456" \
+  databricks-connect-app
+```
+
+**Requirements**:
+- Container must have Managed Identity enabled
+- Identity must have access to the Databricks workspace
+
+### Docker Compose Example
+
+Create a `docker-compose.yml` file:
+
+```yaml
+version: '3.8'
+
+services:
+  word-count:
+    build: .
+    environment:
+      - DATABRICKS_HOST=https://adb-1234567890123456.12.azuredatabricks.net
+      - DATABRICKS_WAREHOUSE_ID=abc123def456
+      - DATABRICKS_TOKEN=${DATABRICKS_TOKEN}
+      - INPUT_FILE=/Volumes/demo/customer1/sample.txt
+  
+  sales-analytics:
+    build: .
+    command: com.example.databricks.SalesAnalyticsDemo /Volumes/my_catalog/my_schema/my_volume/sales_data.csv
+    environment:
+      - DATABRICKS_HOST=https://adb-1234567890123456.12.azuredatabricks.net
+      - DATABRICKS_WAREHOUSE_ID=abc123def456
+      - DATABRICKS_TOKEN=${DATABRICKS_TOKEN}
+```
+
+Run with:
+```bash
+docker-compose up word-count
+# or
+docker-compose up sales-analytics
+```
+
+### Running in Azure Kubernetes Service (AKS) with Workload Identity
+
+Deploy the application as a Kubernetes Job using Azure Workload Identity for authentication.
+
+#### Prerequisites:
+- AKS cluster with Workload Identity enabled
+- Azure Managed Identity with access to Databricks workspace
+- Federated identity credential configured between the Kubernetes service account and Azure Managed Identity
+
+#### Kubernetes Job YAML:
+
+Create `databricks-job.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-ns
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: databricks-job-sa
+  namespace: demo-ns
+  annotations:
+    azure.workload.identity/client-id: "<your-managed-identity-client-id>"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: databricks-word-count
+  namespace: demo-ns
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600  # Auto-cleanup after 1 hour
+  template:
+    metadata:
+      labels:
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: databricks-job-sa
+      restartPolicy: Never
+      containers:
+      - name: databricks-app
+        image: <your-acr>.azurecr.io/databricks-connect-app:latest
+        env:
+        - name: DATABRICKS_HOST
+          value: "https://adb-1234567890123456.12.azuredatabricks.net"
+        - name: DATABRICKS_WAREHOUSE_ID
+          value: "abc123def456"
+        - name: INPUT_FILE
+          value: "/Volumes/demo/customer1/sample.txt"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: databricks-sales-analytics
+  namespace: demo-ns
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: databricks-job-sa
+      restartPolicy: Never
+      containers:
+      - name: databricks-app
+        image: <your-acr>.azurecr.io/databricks-connect-app:latest
+        args:
+        - "com.example.databricks.SalesAnalyticsDemo"
+        - "/Volumes/my_catalog/my_schema/my_volume/sales_data.csv"
+        env:
+        - name: DATABRICKS_HOST
+          value: "https://adb-1234567890123456.12.azuredatabricks.net"
+        - name: DATABRICKS_WAREHOUSE_ID
+          value: "abc123def456"
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2"
+          limits:
+            memory: "8Gi"
+            cpu: "4"
+```
+
+#### Setup Steps:
+
+1. **Push image to Azure Container Registry**:
+   ```bash
+   # Login to ACR
+   az acr login --name <your-acr>
+   
+   # Tag and push
+   docker tag databricks-connect-app <your-acr>.azurecr.io/databricks-connect-app:latest
+   docker push <your-acr>.azurecr.io/databricks-connect-app:latest
+   ```
+
+2. **Create federated identity credential**:
+   ```bash
+   az identity federated-credential create \
+     --name databricks-job-federated-id \
+     --identity-name <your-managed-identity> \
+     --resource-group <your-rg> \
+     --issuer $(az aks show -n <aks-cluster> -g <aks-rg> --query "oidcIssuerProfile.issuerUrl" -o tsv) \
+     --subject system:serviceaccount:demo-ns:databricks-job-sa \
+     --audience api://AzureADTokenExchange
+   ```
+
+3. **Deploy the jobs**:
+   ```bash
+   kubectl apply -f databricks-job.yaml
+   ```
+
+4. **Monitor job execution**:
+   ```bash
+   # Watch job status
+   kubectl get jobs -n demo-ns -w
+   
+   # View logs
+   kubectl logs -n demo-ns job/databricks-word-count
+   kubectl logs -n demo-ns job/databricks-sales-analytics
+   
+   # Check pod details
+   kubectl describe pod -n demo-ns -l job-name=databricks-word-count
+   ```
+
+5. **Clean up completed jobs** (optional):
+   ```bash
+   kubectl delete job databricks-word-count databricks-sales-analytics -n demo-ns
+   ```
+
+**Notes**:
+- Jobs automatically use Workload Identity for authentication (no secrets needed)
+- `ttlSecondsAfterFinished` ensures automatic cleanup of completed jobs
+- Adjust resource limits based on your data volume
+- Use `CronJob` instead of `Job` for scheduled executions
+
+---
+
 ## Summary
 
 This example demonstrates a production-ready pattern for Spark applications with Databricks Connect:
