@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -31,36 +32,26 @@ import static org.apache.spark.sql.functions.*;
 public class SalesAnalyticsDemo {
     
     /**
-     * Helper class that writes to console and optionally to file/Volume
+     * Helper class that writes to console and optionally to Volume
      */
     private static class DualOutputWriter {
-        private final PrintWriter fileWriter;
         private final StringBuilder volumeBuffer;
         private final boolean writeToVolume;
         
-        public DualOutputWriter(String outputFilePath, boolean writeToVolume) throws IOException {
+        public DualOutputWriter(boolean writeToVolume) throws IOException {
             this.writeToVolume = writeToVolume;
             
             if (writeToVolume) {
                 // For Volume output, collect in buffer to write at end
-                this.fileWriter = null;
                 this.volumeBuffer = new StringBuilder();
-            } else if (outputFilePath != null) {
-                // For local file output
-                this.fileWriter = new PrintWriter(new FileWriter(outputFilePath));
-                this.volumeBuffer = null;
             } else {
                 // Console only
-                this.fileWriter = null;
                 this.volumeBuffer = null;
             }
         }
         
         public void println(String text) {
             System.out.println(text);
-            if (fileWriter != null) {
-                fileWriter.println(text);
-            }
             if (volumeBuffer != null) {
                 volumeBuffer.append(text).append("\n");
             }
@@ -69,9 +60,6 @@ public class SalesAnalyticsDemo {
         public void printf(String format, Object... args) {
             String formatted = String.format(format, args);
             System.out.print(formatted);
-            if (fileWriter != null) {
-                fileWriter.print(formatted);
-            }
             if (volumeBuffer != null) {
                 volumeBuffer.append(formatted);
             }
@@ -83,9 +71,6 @@ public class SalesAnalyticsDemo {
             
             // Manually write schema to file/buffer
             String schemaHeader = "\nDataFrame Schema:\nroot\n";
-            if (fileWriter != null) {
-                fileWriter.print(schemaHeader);
-            }
             if (volumeBuffer != null) {
                 volumeBuffer.append(schemaHeader);
             }
@@ -95,9 +80,6 @@ public class SalesAnalyticsDemo {
                     field.name(),
                     field.dataType().simpleString(),
                     field.nullable());
-                if (fileWriter != null) {
-                    fileWriter.print(schemaLine);
-                }
                 if (volumeBuffer != null) {
                     volumeBuffer.append(schemaLine);
                 }
@@ -110,9 +92,6 @@ public class SalesAnalyticsDemo {
         }
         
         public void close() {
-            if (fileWriter != null) {
-                fileWriter.close();
-            }
         }
     }
 
@@ -144,35 +123,42 @@ public class SalesAnalyticsDemo {
     }
     
     /**
-     * Generates output file path with timestamp based on input file name
-     * Example: sales_data_100m.csv -> sales_data_100m-20251025_143052.txt
-     */
-    private static String generateOutputFilePath(String inputFilePath) {
-        Path inputPath = Paths.get(inputFilePath);
-        String fileName = inputPath.getFileName().toString();
-        
-        // Remove .csv extension if present
-        String baseName = fileName.replaceAll("\\.csv$", "");
-        
-        // Generate timestamp
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        
-        // Create output filename
-        String outputFileName = baseName + "-" + timestamp + ".txt";
-        
-        // Place in same directory as input file
-        Path outputPath = inputPath.getParent() != null 
-            ? inputPath.getParent().resolve(outputFileName)
-            : Paths.get(outputFileName);
-            
-        return outputPath.toString();
-    }
-    
-    /**
      * Check if the input path is a Unity Catalog Volume path
      */
     private static boolean isVolumePath(String path) {
         return path != null && path.startsWith("/Volumes/");
+    }
+    
+    /**
+     * Format duration in human-readable format
+     * Examples: "2 seconds", "1 minute, 30 seconds", "2 hours, 15 minutes, 30 seconds"
+     */
+    private static String formatDuration(Duration duration) {
+        long hours = duration.toHours();
+        long minutes = duration.toMinutesPart();
+        long seconds = duration.toSecondsPart();
+        
+        StringBuilder result = new StringBuilder();
+        
+        if (hours > 0) {
+            result.append(hours).append(hours == 1 ? " hour" : " hours");
+        }
+        
+        if (minutes > 0) {
+            if (result.length() > 0) {
+                result.append(", ");
+            }
+            result.append(minutes).append(minutes == 1 ? " minute" : " minutes");
+        }
+        
+        if (seconds > 0 || result.length() == 0) {
+            if (result.length() > 0) {
+                result.append(", ");
+            }
+            result.append(seconds).append(seconds == 1 ? " second" : " seconds");
+        }
+        
+        return result.toString();
     }
     
     /**
@@ -222,27 +208,23 @@ public class SalesAnalyticsDemo {
         // Determine output strategy based on input path
         boolean isVolume = isVolumePath(inputFile);
         String volumeOutputPath = null;
-        String localOutputPath = null;
         
         if (isVolume) {
             volumeOutputPath = generateVolumeOutputPath(inputFile);
             System.out.println("Will write results to Volume: " + volumeOutputPath);
-        } else {
-            localOutputPath = generateOutputFilePath(inputFile);
-            System.out.println("Will write results to local file: " + localOutputPath);
         }
         System.out.println("-".repeat(70));
         
         DualOutputWriter out = null;
         
         try {
-            out = new DualOutputWriter(localOutputPath, isVolume);
-            
+            out = new DualOutputWriter(isVolume);
+            LocalDateTime started = LocalDateTime.now();
             out.println("=".repeat(70));
             out.println("Sales Analytics Demo - DataFrame Showcase");
             out.println("=".repeat(70));
             out.println("Input file: " + inputFile);
-            out.println("Generated: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            out.println("Started: " + started.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             out.println("-".repeat(70));
 
             // Read CSV with options
@@ -454,6 +436,11 @@ public class SalesAnalyticsDemo {
             
             out.println("\n" + "=".repeat(70));
             out.println("Analytics Complete!");
+            LocalDateTime finished = LocalDateTime.now();
+            out.println("Started: " + started.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            out.println("Finished: " + finished.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            Duration duration = Duration.between(started, finished);
+            out.println("Duration: " + formatDuration(duration));
             out.println("=".repeat(70) + "\n");
             
             // Write to Volume if needed
@@ -474,8 +461,6 @@ public class SalesAnalyticsDemo {
                     
                     System.out.println("\n✓ Results saved to Volume: " + volumeOutputPath);
                 }
-            } else if (localOutputPath != null) {
-                System.out.println("\n✓ Results saved to: " + localOutputPath);
             }
             
         } catch (IOException e) {
