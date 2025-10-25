@@ -1,17 +1,27 @@
-# Databricks Connect Word Count Example
+# Databricks Connect Examples
 
-This Java application demonstrates running Apache Spark workloads via **[Databricks Connect](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/databricks-connect/)**. The application executes locally while leveraging remote Databricks compute resources, making it perfect for development, testing, and production deployment.
+This repository contains Java applications demonstrating Apache Spark workloads via **[Databricks Connect](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/databricks-connect/)**. The applications execute locally while leveraging remote Databricks compute resources, making them perfect for development, testing, and production deployment.
 
-## What This Example Does
+## Examples Overview
 
-The application performs a **word count** analysis on a text file using Apache Spark's DataFrame API. It:
+1. **[Word Count Demo](#word-count-demo)** - Classic text analysis using DataFrame API
+2. **[Sales Analytics Demo](#sales-analytics-demo)** - Advanced business analytics with complex aggregations
 
-1. Reads a text file (from DBFS, Unity Catalog Volumes, or cloud storage)
-2. Splits text into words using DataFrame transformations
-3. Normalizes words (lowercase, removes punctuation)
-4. Counts word frequencies using groupBy aggregations
-5. Displays the top 20 most frequent words
-6. Shows statistics about total and unique words
+## Table of Contents
+
+- [Key Features](#key-features)
+- [Databricks Connect Overview](#databricks-connect-overview)
+- [Prerequisites](#prerequisites)
+- [Authentication and Configuration](#authentication-and-configuration)
+- [Project Structure](#project-structure)
+- [Word Count Demo](#word-count-demo)
+- [Sales Analytics Demo](#sales-analytics-demo)
+- [Building the Application](#building-the-application)
+- [Understanding the Code](#understanding-the-code)
+- [POM Configuration](#pom-configuration-for-databricks-connect)
+- [Troubleshooting](#troubleshooting)
+- [Best Practices](#best-practices)
+- [Resources](#useful-resources)
 
 ## Key Features
 
@@ -19,8 +29,11 @@ The application performs a **word count** analysis on a text file using Apache S
 - **Databricks Connect**: Executes locally while using remote Databricks compute
 - **Flexible Input**: Accepts file paths via command-line, environment variable, or defaults
 - **Session Management**: Properly handles SparkSession lifecycle
+- **Multiple Demos**: From simple text analysis to complex business analytics
+- **Volume Output**: Automatically writes results to Unity Catalog Volumes (Sales Demo)
+- **Duration Tracking**: Human-readable execution time reporting
 
-## Databricks Connect
+## Databricks Connect Overview
 
 **Databricks Connect** allows you to run Spark applications from your local development environment while leveraging Databricks compute resources:
 
@@ -47,17 +60,278 @@ The application automatically detects it's running via Databricks Connect and ma
 ```
 databricks/
 ├── pom.xml                                    # Maven config with Databricks Connect
-├── run-databricks-connect.bat               # Windows script for Connect mode
-├── .env                                      # Environment variable examples
-├── README.md                                 # This file
+├── run-app.bat                                # Windows script for Word Count demo
+├── run-sales-demo.bat                         # Windows script for Sales Analytics demo
+├── .env                                       # Environment variable examples
+├── README.md                                  # This file
+├── data/
+│   ├── sample.txt                             # Sample text file (Word Count)
+│   └── sales_data.csv                         # Sample sales data (100k records)
+├── scripts/
+│   ├── generate_sales_data.py                 # Python script to generate larger datasets
+│   └── README.md                              # Data generator documentation
 └── src/
     └── main/
         └── java/
             └── com/
                 └── example/
                     └── databricks/
-                        └── WordCountAppDatabricks.java
+                        ├── WordCountAppDatabricks.java    # Word Count demo
+                        └── SalesAnalyticsDemo.java        # Sales Analytics demo
 ```
+
+---
+
+# Word Count Demo
+
+Classic text analysis demonstrating fundamental DataFrame operations with Apache Spark.
+
+## What This Demo Does
+
+The application performs a **word count** analysis on a text file using Apache Spark's DataFrame API. It:
+
+1. Reads a text file (from DBFS, Unity Catalog Volumes, or cloud storage)
+2. Splits text into words using DataFrame transformations
+3. Normalizes words (lowercase, removes punctuation)
+4. Counts word frequencies using groupBy aggregations
+5. Displays the top 20 most frequent words
+6. Shows statistics about total and unique words
+
+## Running the Word Count Demo
+
+### Option 1: Using the Batch Script (Easiest)
+
+```bash
+.\run-app.bat
+```
+
+The script:
+- Sets Java and Maven options for Spark compatibility
+- Runs via Maven exec plugin with Databricks Connect
+
+### Option 2: Using Maven Directly
+
+```bash
+mvn exec:java -Dexec.mainClass=com.example.databricks.WordCountAppDatabricks
+```
+
+With custom file:
+```bash
+mvn exec:java -Dexec.mainClass=com.example.databricks.WordCountAppDatabricks -Dexec.args="dbfs:/mydata.txt"
+```
+
+## Word Count Input Files
+
+The application supports three ways to specify the input file (in priority order):
+
+1. **Command-line argument**: 
+   ```bash
+   mvn exec:java -Dexec.args="dbfs:/path/to/file.txt"
+   ```
+
+2. **Environment variable**:
+   ```powershell
+   $env:INPUT_FILE = "/Volumes/demo/customer1/sample.txt"
+   mvn exec:java
+   ```
+
+3. **Default paths**:
+   - Databricks Connect: `/Volumes/demo/customer1/sample.txt`
+
+## Word Count Sample Output
+
+```
+Starting WordCountAppDatabricks...
+Running using Databricks Connect
+Using input file from command-line argument
+==================================================
+Reading file: /Volumes/demo/customer1/sample.txt
+Environment: Connect
+==================================================
+
+==================================================
+Top 20 most frequent words:
+==================================================
+ 1. data                  : 127
+ 2. spark                 : 89
+ 3. processing            : 56
+ 4. analytics             : 42
+ 5. distributed           : 38
+...
+
+==================================================
+Statistics:
+==================================================
+Total words: 2847
+Unique words: 623
+==================================================
+```
+
+---
+
+# Sales Analytics Demo
+
+Advanced DataFrame showcase with 100,000+ sales records demonstrating complex business analytics operations.
+
+## What This Demo Does
+
+The Sales Analytics demo performs comprehensive business intelligence analysis on sales data:
+
+1. **Revenue by Product Category** - Total revenue, order count, and average order value per category
+2. **Regional Performance** - Sales metrics across different geographic regions
+3. **Top Products** - Best-selling products by revenue
+4. **Payment Method Distribution** - Transaction analysis by payment type
+5. **Monthly Revenue Trend** - Time-series revenue analysis
+6. **Customer Segmentation** - Top spending customers and their behavior patterns
+
+## Sales Analytics Features
+
+- **CSV Data Processing** - Reads and processes large CSV files
+- **Complex Aggregations** - Multi-dimensional revenue analysis
+- **Window Functions** - Customer segmentation and ranking
+- **Date/Time Operations** - Monthly trend analysis
+- **Multiple Grouping** - Cross-sectional analytics
+- **Serverless Compatible** - Works with Databricks Serverless compute
+- **Volume Output** - Automatically writes results to Unity Catalog Volumes when input is from a Volume
+- **Duration Tracking** - Human-readable execution time reporting
+
+## Sales Demo Dataset
+
+The demo includes a generated dataset (`data/sales_data.csv`) with 100,000 records containing:
+
+- Order ID and Customer ID
+- Product category and name
+- Quantity and unit price
+- Order date
+- Geographic region
+- Payment method
+
+### Dataset Statistics:
+- **Size**: ~6.8 MB
+- **Records**: 100,000 orders
+- **Categories**: Electronics, Clothing, Home & Garden, Books, Sports, Toys, Beauty, Food
+- **Regions**: North America, Europe, Asia, South America, Africa, Oceania
+- **Date Range**: January 2023 - September 2024
+
+## Generating Larger Datasets
+
+Use the included Python script to generate datasets of any size:
+
+```bash
+# Generate 1 million records
+python scripts/generate_sales_data.py 1M sales_data_1m.csv
+
+# Generate 50 million records
+python scripts/generate_sales_data.py 50M sales_data_50m.csv
+
+# Generate 100k records (supports k for thousands, M for millions)
+python scripts/generate_sales_data.py 100k sales_data_100k.csv
+```
+
+See `scripts/README.md` for detailed documentation and performance benchmarks.
+
+## Uploading Data to Databricks
+
+Upload CSV files to DBFS or Unity Catalog Volumes using Databricks CLI:
+
+```bash
+# Upload to DBFS
+databricks fs cp data/sales_data.csv dbfs:/FileStore/sales_data.csv
+
+# Or upload to Unity Catalog Volume
+databricks fs cp data/sales_data.csv dbfs:/Volumes/my_catalog/my_schema/my_volume/sales_data.csv
+
+# Upload large files (50M+ records)
+databricks fs cp sales_data_50m.csv dbfs:/Volumes/my_catalog/my_schema/my_volume/sales_data_50m.csv
+```
+
+## Running the Sales Analytics Demo
+
+### Option 1: Using the Batch Script (Easiest)
+
+```bash
+# Using environment variable (recommended)
+$env:SALES_DATA_FILE = "/Volumes/my_catalog/my_schema/my_volume/sales_data_50m.csv"
+.\run-sales-demo.bat
+
+# Or pass file path as argument
+.\run-sales-demo.bat "/Volumes/my_catalog/my_schema/my_volume/sales_data.csv"
+
+# Using DBFS path
+$env:SALES_DATA_FILE = "dbfs:/FileStore/sales_data.csv"
+.\run-sales-demo.bat
+```
+
+### Option 2: Using Maven Directly
+
+```bash
+mvn exec:java -Dexec.mainClass=com.example.databricks.SalesAnalyticsDemo -Dexec.args="/Volumes/my_catalog/my_schema/my_volume/sales_data.csv"
+```
+
+## Sales Analytics Output
+
+The demo provides two types of output:
+
+### Console Output (Always)
+All analytics results are displayed in the console with formatted tables and statistics.
+
+### Volume Output (Automatic)
+When input is from a Unity Catalog Volume (`/Volumes/...`), results are automatically saved to a timestamped file in the same directory:
+
+- **Input**: `/Volumes/my_catalog/my_schema/my_volume/sales_data_50m.csv`
+- **Output**: `/Volumes/my_catalog/my_schema/my_volume/sales_data_50m-analytics-20251025_181520.txt`
+
+**Note**: DBFS inputs only display console output (no file output).
+
+## Sales Analytics Sample Output
+
+```
+======================================================================
+Sales Analytics Demo - DataFrame Showcase
+======================================================================
+Input file: /Volumes/my_catalog/my_schema/my_volume/sales_data_50m.csv
+Started: 2025-10-25 18:45:00
+----------------------------------------------------------------------
+
+1. TOTAL REVENUE BY PRODUCT CATEGORY
+----------------------------------------------------------------------
+Category             Total Revenue    # Orders     Avg Order Value
+----------------------------------------------------------------------
+Electronics          $  12,345,678.90      15,234 $          810.42
+Clothing             $   8,234,567.12      23,456 $          351.02
+...
+
+2. SALES PERFORMANCE BY REGION
+----------------------------------------------------------------------
+Region               Total Revenue    # Orders     Unique Customers
+----------------------------------------------------------------------
+North America        $  15,678,901.23      25,432              8,234
+Europe               $  12,345,678.90      21,345              7,123
+...
+
+======================================================================
+Analytics Complete!
+Started: 2025-10-25 18:45:00
+Finished: 2025-10-25 18:47:35
+Duration: 2 minutes, 35 seconds
+======================================================================
+
+✓ Results saved to Volume: /Volumes/my_catalog/my_schema/my_volume/sales_data_50m-analytics-20251025_184735.txt
+```
+
+## Key Differences Between Demos
+
+| Feature | Word Count | Sales Analytics |
+|---------|------------|-----------------|
+| **Data Type** | Unstructured text | Structured CSV |
+| **API Style** | Basic DataFrame ops | Complex aggregations |
+| **Operations** | Split, filter, group | Window functions, multi-group, time-series |
+| **Output** | Console only | Console + Volume file |
+| **Caching** | Not used (serverless) | Not used (serverless) |
+| **Use Case** | Text analysis | Business intelligence |
+| **Duration Tracking** | Basic | Human-readable format |
+
+---
 
 ## Authentication and Configuration
 
@@ -69,8 +343,8 @@ The application supports multiple authentication methods, automatically selected
 
 ```powershell
 # Set workspace and compute
-$env:DATABRICKS_HOST = "https://adb-2785354362445214.14.azuredatabricks.net"
-$env:DATABRICKS_WAREHOUSE_ID = "2a20ab81c2a7bf93"
+$env:DATABRICKS_HOST = "https://adb-1234567890123456.12.azuredatabricks.net"
+$env:DATABRICKS_WAREHOUSE_ID = "abc123def456"
 
 # Run - Managed Identity is used automatically
 mvn exec:java
@@ -93,8 +367,8 @@ mvn exec:java
 Use Azure Service Principal credentials:
 
 ```powershell
-$env:DATABRICKS_HOST = "https://adb-2785354362445214.14.azuredatabricks.net"
-$env:DATABRICKS_WAREHOUSE_ID = "2a20ab81c2a7bf93"
+$env:DATABRICKS_HOST = "https://adb-1234567890123456.12.azuredatabricks.net"
+$env:DATABRICKS_WAREHOUSE_ID = "abc123def456"
 $env:ARM_CLIENT_ID = "<service-principal-client-id>"
 $env:ARM_CLIENT_SECRET = "<service-principal-secret>"
 $env:ARM_TENANT_ID = "<azure-tenant-id>"
@@ -107,9 +381,9 @@ mvn exec:java
 Use a Databricks personal access token:
 
 ```powershell
-$env:DATABRICKS_HOST = "https://adb-2785354362445214.14.azuredatabricks.net"
+$env:DATABRICKS_HOST = "https://adb-1234567890123456.12.azuredatabricks.net"
 $env:DATABRICKS_TOKEN = "<your-personal-access-token>"
-$env:DATABRICKS_WAREHOUSE_ID = "2a20ab81c2a7bf93"
+$env:DATABRICKS_WAREHOUSE_ID = "abc123def456"
 
 mvn exec:java
 ```
@@ -134,8 +408,8 @@ Use the Databricks CLI to store credentials:
 3. **Configure environment variables**:
    ```powershell
    $env:DATABRICKS_CONFIG_PROFILE = "databricks-connect"
-   $env:DATABRICKS_CLUSTER_ID = "1023-084458-l70zdchj"
-   $env:DATABRICKS_WAREHOUSE_ID = "2a20ab81c2a7bf93"
+   $env:DATABRICKS_CLUSTER_ID = "0123-456789-abcdefgh"
+   $env:DATABRICKS_WAREHOUSE_ID = "abc123def456"
    ```
 
 ### Authentication Priority
@@ -156,10 +430,10 @@ Choose your execution target:
 
 ```powershell
 # Option 1: All-purpose or job cluster
-$env:DATABRICKS_CLUSTER_ID = "1023-084458-l70zdchj"
+$env:DATABRICKS_CLUSTER_ID = "0123-456789-abcdefgh"
 
 # Option 2: SQL Warehouse (recommended for DataFrame workloads)
-$env:DATABRICKS_WAREHOUSE_ID = "2a20ab81c2a7bf93"
+$env:DATABRICKS_WAREHOUSE_ID = "abc123def456"
 ```
 
 ## Specifying Input Files
@@ -188,28 +462,7 @@ mvn clean package
 
 This creates `target/databricks-connect-example-1.0.2.jar` with all dependencies bundled.
 
-## Running with Databricks Connect
-
-### Option 1: Using the Batch Script (Easiest)
-
-```bash
-.\run-app.bat
-```
-
-The script:
-- Sets Java and Maven options for Spark compatibility
-- Runs via Maven exec plugin with Databricks Connect
-
-### Option 2: Using Maven Directly
-
-```bash
-mvn exec:java -Dexec.mainClass=com.example.databricks.WordCountAppDatabricks
-```
-
-With custom file:
-```bash
-mvn exec:java -Dexec.mainClass=com.example.databricks.WordCountAppDatabricks -Dexec.args="dbfs:/mydata.txt"
-```
+---
 
 ## Accessing Cloud Storage
 
@@ -232,6 +485,8 @@ Configure storage credentials via:
 - Cluster configuration (Spark config)
 - Unity Catalog external locations
 - Service principals with secrets
+
+---
 
 ## Understanding the Code
 
@@ -277,6 +532,8 @@ finally {
 
 The application checks if it's running in Databricks workspace (where session is managed by the platform) or via Databricks Connect (where you manage the lifecycle).
 
+---
+
 ## POM Configuration for Databricks Connect
 
 Key dependencies:
@@ -306,6 +563,8 @@ Key dependencies:
 ```
 
 **Important**: Use Scala 2.12 artifacts and mark Spark as `provided` to avoid version conflicts.
+
+---
 
 ## Troubleshooting
 
@@ -374,15 +633,25 @@ Unique words: 623
 | Variable | Purpose | Example |
 |----------|---------|---------|
 | `DATABRICKS_CONFIG_PROFILE` | Profile name in `~/.databrickscfg` | `databricks-connect` |
-| `DATABRICKS_CLUSTER_ID` | All-purpose or job cluster ID | `1023-084458-l70zdchj` |
-| `DATABRICKS_WAREHOUSE_ID` | SQL warehouse ID | `2a20ab81c2a7bf93` |
-| `INPUT_FILE` | Override default input file path | `dbfs:/my-data.txt` |
-| `DATABRICKS_RUNTIME_VERSION` | Set by Databricks (read-only) | `14.3` |
+| `DATABRICKS_CLUSTER_ID` | All-purpose or job cluster ID | `0123-456789-abcdefgh` |
+| `DATABRICKS_WAREHOUSE_ID` | SQL warehouse ID | `abc123def456` |
+| `DATABRICKS_RUNTIME_VERSION` | Set by Databricks (read-only) | `17.2` |
+| `INPUT_FILE` | Input file for Word Count demo | `dbfs:/my-data.txt` |
+| `SALES_DATA_FILE` | Input file for Sales Analytics demo | `/Volumes/my_catalog/my_schema/my_volume/sales_data.csv` |
+
+---
 
 ## Next Steps
 
 - **Scale Up**: Process larger datasets using cluster autoscaling or serverless compute
 - **Add Streaming**: Use Structured Streaming for real-time data
+- **Integrate Delta Lake**: Write results to Delta tables for ACID transactions
+- **Add Testing**: Unit test DataFrame logic with local Spark sessions
+- **Generate Large Datasets**: Use `scripts/generate_sales_data.py` for performance testing
+
+---
+
+## Useful Resources
 - **Integrate Delta Lake**: Write results to Delta tables for ACID transactions
 - **Add Testing**: Unit test DataFrame logic with local Spark sessions
 - **Explore Sales Demo**: Check out `SALES_DEMO_README.md` for advanced DataFrame operations
@@ -394,6 +663,8 @@ Unique words: 623
 - [Databricks CLI Reference](https://docs.databricks.com/dev-tools/cli/index.html)
 - [Unity Catalog Volumes](https://docs.databricks.com/data-governance/unity-catalog/volumes.html)
 
+---
+
 ## Summary
 
 This example demonstrates a production-ready pattern for Spark applications with Databricks Connect:
@@ -404,5 +675,8 @@ This example demonstrates a production-ready pattern for Spark applications with
 ✅ Proper session lifecycle management  
 ✅ Multiple authentication methods (Managed Identity, Service Principal, PAT, CLI)  
 ✅ Support for clusters and SQL warehouses  
+✅ Two comprehensive demos: text analysis and business analytics  
+✅ Automatic Volume output for large-scale analytics  
+✅ Human-readable duration tracking  
 
-The `WordCountAppDatabricks.java` class handles environment detection and session management automatically!
+The demos provide complete examples from simple text processing to complex business intelligence analytics!
