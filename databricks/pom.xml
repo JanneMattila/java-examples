@@ -40,11 +40,19 @@
 
         <!-- Databricks Connect 
         https://mvnrepository.com/artifact/com.databricks/databricks-connect
+        Exclude databricks-dbutils-scala which has an invalid POM with missing versions
         -->
         <dependency>
             <groupId>com.databricks</groupId>
             <artifactId>databricks-connect_2.13</artifactId>
             <version>17.2.1</version>
+            <exclusions>
+                <!-- Exclude databricks-dbutils-scala which has invalid POM -->
+                <exclusion>
+                    <groupId>com.databricks</groupId>
+                    <artifactId>databricks-dbutils-scala_2.13</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- json4s dependencies - ensure compatible versions -->
