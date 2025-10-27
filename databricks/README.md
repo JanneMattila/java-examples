@@ -335,7 +335,23 @@ Duration: 2 minutes, 35 seconds
 
 ## Authentication and Configuration
 
-The application supports multiple authentication methods, automatically selected in this priority order:
+The application supports multiple authentication methods, automatically selected in this priority order.
+You can see this in logs when you run the application:
+
+```bash
+# ...
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Ignoring pat auth, because databricks-cli is preferred
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Ignoring basic auth, because databricks-cli is preferred
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Ignoring oauth-m2m auth, because databricks-cli is preferred
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Ignoring env-oidc auth, because databricks-cli is preferred
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Ignoring file-oidc auth, because databricks-cli is preferred
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Ignoring github-oidc auth, because databricks-cli is preferred
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Ignoring github-oidc-azure auth, because databricks-cli is preferred
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Ignoring azure-client-secret auth, because databricks-cli is preferred
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Ignoring azure-cli auth, because databricks-cli is preferred
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Ignoring external-browser auth, because databricks-cli is preferred
+INFO com.databricks.sdk.core.DefaultCredentialsProvider - Trying databricks-cli auth
+```
 
 ### Method 1: Azure Managed Identity (Recommended for Production)
 
