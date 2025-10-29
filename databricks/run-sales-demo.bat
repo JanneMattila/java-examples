@@ -1,11 +1,9 @@
 @echo off
 REM Run the Sales Analytics Demo
 
-REM Check if JAVA_HOME is set
-if "%JAVA_HOME%"=="" (
-    echo Error: JAVA_HOME is not set.
-    echo Please set JAVA_HOME to your JDK installation directory.
-    exit /b 1
+REM Configure Java if desired (kept consistent with local run script)
+IF NOT DEFINED JAVA_HOME (
+    SET "JAVA_HOME=%LOCALAPPDATA%\Programs\Eclipse Adoptium\jdk-21.0.6.7-hotspot"
 )
 
 echo Using JAVA_HOME: %JAVA_HOME%
