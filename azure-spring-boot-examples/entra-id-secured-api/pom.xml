@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Spring Boot 2.7.x is the last Spring Boot line that supports Java 8 (1.8) -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.18</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.example</groupId>
+    <artifactId>entra-id-secured-api</artifactId>
+    <version>1.0.0</version>
+    <name>entra-id-secured-api</name>
+    <description>REST API secured with Microsoft Entra ID (Java 8 compatible)</description>
+
+    <properties>
+        <!-- Java 1.8 compatible bytecode (sets maven.compiler.source/target via Spring Boot parent) -->
+        <java.version>1.8</java.version>
+        <!-- Spring Cloud Azure 4.x is the Microsoft SDK line for Spring Boot 2.x / Java 8 -->
+        <spring-cloud-azure.version>4.20.0</spring-cloud-azure.version>
+    </properties>
+
+    <profiles>
+        <!-- Newer JDKs (9+) also verify that only Java 8 APIs are used. JDK 8 does not support this flag. -->
+        <profile>
+            <id>release-8-on-newer-jdk</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+            </properties>
+        </profile>
+    </profiles>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.azure.spring</groupId>
+                <artifactId>spring-cloud-azure-dependencies</artifactId>
+                <version>${spring-cloud-azure.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Microsoft Entra ID integration for Spring Security (resource server) -->
+        <dependency>
+            <groupId>com.azure.spring</groupId>
+            <artifactId>spring-cloud-azure-starter-active-directory</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

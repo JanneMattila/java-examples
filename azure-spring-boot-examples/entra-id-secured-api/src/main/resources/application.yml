@@ -1,0 +1,27 @@
+spring:
+  config:
+    # Same ".env" file is used by the PowerShell scripts.
+    # Environment variables (e.g., "docker run --env-file .env") work as well.
+    import: optional:file:.env[.properties]
+  cloud:
+    azure:
+      active-directory:
+        enabled: true
+        profile:
+          tenant-id: ${TENANT_ID}
+        credential:
+          client-id: ${API_CLIENT_ID}
+        app-id-uri: ${API_APP_ID_URI:api://${API_CLIENT_ID}}
+        resource-server:
+          principal-claim-name: sub
+          claim-to-authority-prefix-map:
+            # Delegated permissions (user tokens)
+            scp: SCOPE_
+            # Application permissions (app-only tokens)
+            roles: APPROLE_
+            # Calling client application id (v2.0 access tokens) used for allow-listing
+            azp: CLIENT_
+
+app:
+  # Comma separated list of client application ids which are allowed to call the API
+  allowed-client-ids: ${ALLOWED_CLIENT_IDS:}
