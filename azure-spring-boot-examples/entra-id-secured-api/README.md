@@ -1,4 +1,4 @@
-# REST API secured with Microsoft Entra ID (Java 8 / Maven)
+# REST API secured with Microsoft Entra ID
 
 Spring Boot REST API that is protected with Microsoft Entra ID access tokens.
 It has a single endpoint `POST /api/echo` which echoes back the request body and
